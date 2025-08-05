@@ -13,7 +13,8 @@ def video_routes():
     
     # request models
     video_request_model = api_ns.model('VideoRequest', {
-        'url': fields.String(required=True, description='URL to the video file')
+        'url': fields.String(required=True, description='URL to the video file'),
+        'effect': fields.String(required=False, description='Effect to apply to the video')
     })
     
     # response models
@@ -39,11 +40,12 @@ def video_routes():
                     api_ns.abort(400, 'URL is required')
                 
                 video_url = data['url']
+                effect = data['effect']
                 
                 logger.info(f"Starting video processing for URL: {video_url}")
                 
                 # Process the video (now returns Supabase URL)
-                output_url = VideoBackgroundService.process_video_with_background_filter(video_url)
+                output_url = VideoBackgroundService.process_video_with_background_filter(video_url, effect)
                 
                 logger.info(f"Video processing completed. Output URL: {output_url}")
                 

@@ -30,12 +30,12 @@ class VideoBackgroundService:
         logger.info(f"Video properties: {width}x{height} @ {fps}fps")
 
         raw_path = get_temp_path() + ".mp4"
-        fourcc = cv2.VideoWriter_fourcc(*'avc1')
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(raw_path, fourcc, fps, (width, height))
         if not out.isOpened():
             raise RuntimeError(f"Could not open VideoWriter for {raw_path}")
 
-        model = ModelService.segmentation_model()
+        model_tuple = ModelService.segmentation_model(device)
         frame_count = 0
 
         while True:
@@ -44,7 +44,7 @@ class VideoBackgroundService:
                 break
             frame_count += 1
 
-            mask = ModelService.get_person_mask(model, frame)
+            mask = ModelService.get_person_mask(model_tuple, frame)
             mask_3ch = np.repeat(mask[:, :, None], 3, axis=2)
 
             if effect == 'gray':
@@ -92,6 +92,7 @@ class VideoBackgroundService:
 
             composite = np.where(mask_3ch == 1, frame, bg)
             out.write(composite)
+
             if frame_count % 30 == 0:
                 logger.info(f"Processed {frame_count} frames")
 
@@ -101,7 +102,6 @@ class VideoBackgroundService:
         if not (os.path.exists(raw_path) and os.path.getsize(raw_path) > 0):
             raise RuntimeError("Processed video file was not created successfully")
 
-        # Compress to stay under 50 MB before upload
         compressed_path = VideoCompressionService.compress_to_target(raw_path, target_size_mb=50)
         try:
             os.remove(raw_path)
