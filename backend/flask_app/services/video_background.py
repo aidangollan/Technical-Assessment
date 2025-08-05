@@ -2,7 +2,9 @@ import cv2
 import os
 import numpy as np
 import logging
+
 from flask_app.services.models import ModelService
+from flask_app.services.compress import VideoCompressionService
 from flask_app.services.supabase_storage import SupabaseStorageService
 from flask_app.helpers import get_temp_path
 
@@ -16,7 +18,7 @@ class VideoBackgroundService:
                                              device: str = None) -> str:
         """
         Download video from URL, segment the speaker, apply a background filter,
-        and upload the processed video to Supabase.
+        compress result to meet bucket limits, and upload to Supabase.
         """
         cap = cv2.VideoCapture(video_url)
         if not cap.isOpened():
@@ -27,9 +29,11 @@ class VideoBackgroundService:
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         logger.info(f"Video properties: {width}x{height} @ {fps}fps")
 
-        output_path = get_temp_path() + ".mp4"
+        raw_path = get_temp_path() + ".mp4"
         fourcc = cv2.VideoWriter_fourcc(*'avc1')
-        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        out = cv2.VideoWriter(raw_path, fourcc, fps, (width, height))
+        if not out.isOpened():
+            raise RuntimeError(f"Could not open VideoWriter for {raw_path}")
 
         model = ModelService.segmentation_model()
         frame_count = 0
@@ -88,17 +92,27 @@ class VideoBackgroundService:
 
             composite = np.where(mask_3ch == 1, frame, bg)
             out.write(composite)
-
             if frame_count % 30 == 0:
                 logger.info(f"Processed {frame_count} frames")
 
         cap.release()
         out.release()
 
-        if not (os.path.exists(output_path) and os.path.getsize(output_path) > 0):
-            raise RuntimeError("Optimized video file was not created successfully")
+        if not (os.path.exists(raw_path) and os.path.getsize(raw_path) > 0):
+            raise RuntimeError("Processed video file was not created successfully")
 
-        upload_result = SupabaseStorageService.upload_video(output_path)
-        logger.info(f"Finished processing {frame_count} frames, output at {output_path}")
+        # Compress to stay under 50 MB before upload
+        compressed_path = VideoCompressionService.compress_to_target(raw_path, target_size_mb=50)
+        try:
+            os.remove(raw_path)
+        except OSError:
+            logger.warning(f"Could not delete intermediate file {raw_path}")
 
+        upload_result = SupabaseStorageService.upload_video(compressed_path)
+        try:
+            os.remove(compressed_path)
+        except OSError:
+            logger.warning(f"Could not delete compressed file {compressed_path}")
+
+        logger.info(f"Finished processing {frame_count} frames, uploaded at {upload_result['public_url']}")
         return upload_result['public_url']

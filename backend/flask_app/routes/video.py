@@ -21,7 +21,6 @@ def video_routes():
         'message': fields.String(required=True, description='Processing status message'),
         'input_url': fields.String(required=True, description='The input video URL'),
         'output_url': fields.String(required=True, description='Public URL to processed video in Supabase storage'),
-        'video_info': fields.Raw(description='Video metadata')
     })
     
     @api_ns.route('/background-effect')
@@ -42,12 +41,6 @@ def video_routes():
                 video_url = data['url']
                 
                 logger.info(f"Starting video processing for URL: {video_url}")
-
-                # placeholderUrl = 'https://vsgwpzxldollbdilvonc.supabase.co/storage/v1/object/public/videos/processed/processed_49dab2ad-0102-4404-ab8f-5915b3401fb9.mp4'
-                
-                # Get video info first
-                video_info = VideoInfoService.get_video_info(video_url)
-                logger.info(f"Video info: {video_info}")
                 
                 # Process the video (now returns Supabase URL)
                 output_url = VideoBackgroundService.process_video_with_background_filter(video_url)
