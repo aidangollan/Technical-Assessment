@@ -1,25 +1,38 @@
-from flask import Flask, request, jsonify
+from flask import Flask
+from flask_restx import Api
 from flask_cors import CORS
-from dotenv import load_dotenv
-import logging
-from helpers import *
+from config import configure_app
+from routes.api import api_ns
+from routes.api.hello import register_hello_routes
 
-app = Flask(__name__)
-cors = CORS(app)
+def create_app():
+    """Application factory pattern"""
+    app = Flask(__name__)
+    
+    # Configure CORS
+    CORS(app)
+    
+    # Configure app settings
+    configure_app(app)
+    
+    # Initialize Flask-RESTX
+    api = Api(
+      app,
+      version='1.0',
+      title='Face Detection API',
+      description='A Flask-RESTX API for face detection functionality',
+      doc='/docs/'  # Swagger UI will be available at /docs/
+    )
+    
+    # Register route modules
+    register_hello_routes(api)
+    
+    # Add namespace to API
+    api.add_namespace(api_ns)
+    
+    return app
 
-load_dotenv()
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-@app.route("/hello-world", methods=["GET"])
-def hello_world():
-    try:
-        return jsonify({"Hello": "World"}), 200
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        return jsonify({"error": str(e)}), 500
+app = create_app()
 
 
 
