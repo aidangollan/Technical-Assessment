@@ -84,11 +84,7 @@ const App: React.FC = () => {
           </div>
         </div>
         <div className="w-80 flex-shrink-0 h-full">
-          <FilterMenu
-            loading={loading}
-            handleRequestVideo={handleRequestVideo}
-            error={error}
-          />
+          <FilterMenu />
         </div>
       </div>
     </div>

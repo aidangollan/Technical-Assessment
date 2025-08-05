@@ -3,17 +3,8 @@ import { Filters } from '../constants/filter';
 import { FilterType } from '../types/filter';
 import { getPreviewStyle } from '../utils/filter';
 
-interface FilterMenuProps {
-  loading: boolean;
-  handleRequestVideo: (filterType: FilterType) => void;
-  error?: string | null;
-}
 
-const FilterMenu: React.FC<FilterMenuProps> = ({
-  loading,
-  handleRequestVideo,
-  error,
-}) => {
+const FilterMenu = () => {
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('gray');
 
   const handleFilterSelect = (filterType: FilterType) => {

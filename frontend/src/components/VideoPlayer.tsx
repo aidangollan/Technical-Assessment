@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent } from 'react'
+import React, { useState } from 'react'
 
 interface VideoPlayerProps {
   src: string | null
@@ -18,20 +18,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [inputUrl, setInputUrl] = useState('')
   const [fileError, setFileError] = useState<string | null>(null)
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setFileError(null)
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!file.type.startsWith('video/')) {
-      setFileError('Please select a valid video file.')
-      return
-    }
-    const objectUrl = URL.createObjectURL(file)
-    onSrcChange(objectUrl)
-  }
-
   const handleUrlLoad = () => {
-    if (!inputUrl) {
+    setFileError(null)
+    if (!inputUrl.trim()) {
       setFileError('Please enter a URL.')
       return
     }
@@ -42,9 +31,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   if (!src) {
     return (
       <div className="relative w-full h-[70vh] bg-black rounded-xl flex flex-col items-center justify-center p-4">
-        <p className="text-white mb-4">No video loaded</p>
-        <input type="file" accept="video/*" onChange={handleFileChange} className="mb-3" />
-        <div className="flex mb-3 w-full">
+        <p className="text-white mb-4 text-center">No video loaded</p>
+        <div className="flex mb-3 w-full max-w-md">
           <input
             type="text"
             placeholder="Enter video URL"
@@ -52,17 +40,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             onChange={e => setInputUrl(e.target.value)}
             className="flex-1 px-3 py-2 rounded-l-lg border border-gray-300 focus:outline-none"
           />
-          <button onClick={handleUrlLoad} className="px-4 py-2 bg-blue-600 text-white rounded-r-lg">
+          <button
+            onClick={handleUrlLoad}
+            className="px-4 py-2 bg-blue-600 text-white rounded-r-lg"
+          >
             Load
           </button>
         </div>
-        {fileError && <p className="text-red-500">{fileError}</p>}
+        {fileError && <p className="text-red-500 text-center">{fileError}</p>}
       </div>
     )
   }
 
   return (
-    <div className="relative w-full h-[70vh] flex items-center justify-center bg-black rounded-xl overflow-hidden">
+    <div className="relative w-full h-[70vh] flex flex-col items-center justify-center bg-black rounded-xl overflow-hidden">
       <video
         ref={videoElementRef}
         src={src}
@@ -75,8 +66,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           <div className="flex flex-col items-center gap-4 text-white p-4">
             <div className="flex gap-1">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div
+                className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                style={{ animationDelay: '0.1s' }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                style={{ animationDelay: '0.2s' }}
+              ></div>
             </div>
             <p className="text-sm font-medium">Processing video...</p>
           </div>

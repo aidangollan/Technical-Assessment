@@ -1,8 +1,14 @@
-import React, { useRef, useState, useEffect, useLayoutEffect } from 'react'
+import React, { useRef, useState, useEffect, useLayoutEffect, CSSProperties } from 'react'
 import { Play, Pause } from 'lucide-react'
 import { Rnd } from 'react-rnd'
 import { FilterType } from '../types/filter'
 import { TimelineItem } from '../types/timeline'
+import { Filters, filterStyleMap } from '../constants/filter'
+
+interface FilterOption {
+  type: FilterType
+  title: string
+}
 
 interface TimelineProps {
   videoElement: HTMLVideoElement | null
@@ -21,7 +27,11 @@ function formatTime(ms: number): string {
     : `${minutes}:${pad(seconds)}`
 }
 
-const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) => {
+const Timeline: React.FC<TimelineProps> = ({
+  videoElement,
+  items,
+  setItems,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
@@ -35,7 +45,7 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedItemId) {
-        setItems(prev => prev.filter(item => item.id !== selectedItemId))
+        setItems((prev) => prev.filter((item) => item.id !== selectedItemId))
         setSelectedItemId(null)
       }
     }
@@ -46,7 +56,9 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
   useLayoutEffect(() => {
     const update = () => {
       if (containerRef.current) {
-        setContainerWidth(containerRef.current.getBoundingClientRect().width)
+        setContainerWidth(
+          containerRef.current.getBoundingClientRect().width
+        )
       }
     }
     update()
@@ -110,7 +122,8 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
     document.addEventListener('mouseup', onMouseUp)
   }
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault()
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) =>
+    e.preventDefault()
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     const filterType = e.dataTransfer.getData('filter') as FilterType
@@ -125,17 +138,17 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
       startTime,
       endTime: Math.min(duration, startTime + defaultDuration),
     }
-    setItems(prev => [...prev, newItem])
+    setItems((prev) => [...prev, newItem])
   }
 
   const handleDragStop = (id: string, x: number) => {
     if (!containerRef.current) return
     const rect = containerRef.current.getBoundingClientRect()
     const newStart = (x / rect.width) * duration
-    const item = items.find(it => it.id === id)!
+    const item = items.find((it) => it.id === id)!
     const length = item.endTime - item.startTime
-    setItems(prev =>
-      prev.map(it =>
+    setItems((prev) =>
+      prev.map((it) =>
         it.id === id ? { ...it, startTime: newStart, endTime: newStart + length } : it
       )
     )
@@ -154,8 +167,10 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
     const widthPx = refEl.getBoundingClientRect().width
     const newStart = (position.x / rect.width) * duration
     const newEnd = ((position.x + widthPx) / rect.width) * duration
-    setItems(prev =>
-      prev.map(it => (it.id === id ? { ...it, startTime: newStart, endTime: newEnd } : it))
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === id ? { ...it, startTime: newStart, endTime: newEnd } : it
+      )
     )
   }
 
@@ -222,7 +237,7 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
           onDragOver={disabled ? undefined : handleDragOver}
           onDrop={disabled ? undefined : handleDrop}
         >
-          {items.map(item => {
+          {items.map((item) => {
             if (!containerRef.current) return null
             const rect = containerRef.current.getBoundingClientRect()
             const trackH = rect.height
@@ -231,6 +246,19 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
             const xPx = (item.startTime / duration) * rect.width
             const wPx = ((item.endTime - item.startTime) / duration) * rect.width
             const isSelected = selectedItemId === item.id
+
+            const styleInfo = filterStyleMap[item.filterType] || {
+              bgClass: 'bg-blue-500 bg-opacity-80',
+              textClass: 'text-white',
+            }
+            const title =
+              Filters.find((f) => f.type === item.filterType)?.title ||
+              item.filterType
+
+            const inlineStyle: CSSProperties = {}
+            if (styleInfo.filterCss) {
+              inlineStyle.filter = styleInfo.filterCss
+            }
 
             return (
               <Rnd
@@ -241,7 +269,9 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
                 bounds="parent"
                 size={{ width: wPx, height: elH }}
                 position={{ x: xPx, y: yOff }}
-                onDragStop={disabled ? undefined : (_e, d) => handleDragStop(item.id, d.x)}
+                onDragStop={
+                  disabled ? undefined : (_e, d) => handleDragStop(item.id, d.x)
+                }
                 onResizeStop={
                   disabled
                     ? undefined
@@ -253,15 +283,16 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
                 }
               >
                 <div
-                  onClick={e => {
+                  onClick={(e) => {
                     e.stopPropagation()
                     setSelectedItemId(item.id)
                   }}
-                  className={`w-full h-full flex items-center justify-center text-xs text-white bg-blue-500 bg-opacity-80 rounded border shadow-sm hover:bg-opacity-90 transition-all ${
+                  className={`${styleInfo.bgClass} w-full h-full flex items-center justify-center text-xs ${styleInfo.textClass} rounded border shadow-sm hover:bg-opacity-90 transition-all ${
                     isSelected ? 'ring-2 ring-yellow-400' : ''
                   }`}
+                  style={inlineStyle}
                 >
-                  <span className="font-medium truncate px-1">{item.filterType}</span>
+                  <span className="font-medium truncate px-1">{title}</span>
                 </div>
               </Rnd>
             )
