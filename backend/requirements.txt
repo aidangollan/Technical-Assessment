@@ -3,7 +3,12 @@ requests
 python-dotenv
 flask
 flask_cors
-opencv-python
+opencv-python-headless
 flask-restx
 supabase
+torch>=2.0.0
+torchvision>=0.15.0
+numpy
+Pillow
+mediapipe
 

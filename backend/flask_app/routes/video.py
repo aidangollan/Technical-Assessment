@@ -4,7 +4,7 @@ import logging
 
 from flask_app.services.video_background import VideoBackgroundService
 from flask_app.services.video_info import VideoInfoService
-from . import api_ns
+from flask_app.routes import api_ns
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,8 @@ def video_routes():
                 video_url = data['url']
                 
                 logger.info(f"Starting video processing for URL: {video_url}")
+
+                # placeholderUrl = 'https://vsgwpzxldollbdilvonc.supabase.co/storage/v1/object/public/videos/processed/processed_49dab2ad-0102-4404-ab8f-5915b3401fb9.mp4'
                 
                 # Get video info first
                 video_info = VideoInfoService.get_video_info(video_url)
@@ -56,7 +58,7 @@ def video_routes():
                     'message': 'Video processed successfully with background filter applied and uploaded to Supabase storage',
                     'input_url': video_url,
                     'output_url': output_url,
-                    'video_info': video_info
+                    'video_info': None
                 }, 200
                 
             except Exception as e:

@@ -1,6 +1,7 @@
 from flask_restx import Resource, fields
 import logging
-from . import api_ns
+
+from flask_app.routes import api_ns
 
 logger = logging.getLogger(__name__)
 

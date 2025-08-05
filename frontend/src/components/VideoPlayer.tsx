@@ -11,7 +11,7 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       <video
         ref={ref}
         src={src}
-        className="video-player"
+        className="w-full max-w-full h-auto block transition-all duration-300 ease-in-out"
         controls
         onLoadedMetadata={onLoadedMetadata}
         crossOrigin="anonymous"
@@ -22,4 +22,4 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
 VideoPlayer.displayName = 'VideoPlayer';
 
-export default VideoPlayer; 
+export default VideoPlayer;
