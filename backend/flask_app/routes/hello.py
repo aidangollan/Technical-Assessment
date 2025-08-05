@@ -4,11 +4,9 @@ from . import api_ns
 
 logger = logging.getLogger(__name__)
 
-def register_hello_routes(api):
-    """Register hello world routes and models"""
-    
-    # Define response models
-    hello_model = api.model('HelloResponse', {
+def hello_routes():    
+    # response models
+    hello_model = api_ns.model('HelloResponse', {
         'Hello': fields.String(required=True, description='Greeting message')
     })
     
@@ -24,4 +22,4 @@ def register_hello_routes(api):
                 return {"Hello": "World"}, 200
             except Exception as e:
                 logger.error(f"Error: {e}")
-                api.abort(500, error=str(e))
+                api_ns.abort(500, error=str(e))

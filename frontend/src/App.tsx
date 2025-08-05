@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import VideoPlayer from './components/VideoPlayer';
+import FilterMenu, { FilterOptions } from './components/FilterMenu';
 import { videoUrl } from './consts';
 
 export interface FaceDetection {
@@ -14,43 +15,46 @@ export interface FaceDetection {
 
 const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [response, setResponse] = useState<string>('');
+  const [filters, setFilters] = useState<FilterOptions>({
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    blur: 0,
+    grayscale: false,
+    sepia: false
+  });
 
-  const pingBackend = async () => {
-    try {
-      const res = await fetch('http://127.0.0.1:8080/hello-world');
-      const data = await res.text();
-      setResponse(data);
-      console.log('Backend response:', data);
-    } catch (error) {
-      console.error('Error pinging backend:', error);
-      setResponse('Error connecting to backend');
+  const handleApplyFilters = (newFilters: FilterOptions) => {
+    setFilters(newFilters);
+    if (videoRef.current) {
+      const filterString = [
+        `brightness(${newFilters.brightness}%)`,
+        `contrast(${newFilters.contrast}%)`,
+        `saturate(${newFilters.saturation}%)`,
+        `blur(${newFilters.blur}px)`,
+        newFilters.grayscale ? 'grayscale(100%)' : '',
+        newFilters.sepia ? 'sepia(100%)' : ''
+      ].filter(Boolean).join(' ');
+      
+      videoRef.current.style.filter = filterString;
     }
-  };
+  }
 
   return (
-    <div className="container">
-      <div style={{ textAlign: 'center' }}>
-        <div className="video-container">
-          <VideoPlayer
-            ref={videoRef}
-            src={videoUrl}
-            onLoadedMetadata={() => console.log('Video loaded')}
-          />
+    <div className="app-container">
+      <div className="main-layout">
+        <div className="video-section">
+          <div className="video-container">
+            <VideoPlayer
+              ref={videoRef}
+              src={videoUrl}
+              onLoadedMetadata={() => console.log('Video loaded')}
+            />
+          </div>
         </div>
         
-        <div style={{ marginTop: '20px' }}>
-          <button 
-            onClick={pingBackend}
-            className="btn btn-primary"
-          >
-            Ping Backend
-          </button>
-          {response && (
-            <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-              Response: {response}
-            </div>
-          )}
+        <div className="filter-section">
+          <FilterMenu onApplyFilters={handleApplyFilters} />
         </div>
       </div>
     </div>
