@@ -11,5 +11,4 @@ export type FilterType =
 export interface FilterOption {
     type: FilterType;
     title: string;
-    subtitle: string;
 }

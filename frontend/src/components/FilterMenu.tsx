@@ -20,6 +20,14 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
     setSelectedFilter(filterType);
   };
 
+  const handleDragStart = (
+    e: React.DragEvent<HTMLDivElement>,
+    filterType: FilterType
+  ) => {
+    e.dataTransfer.setData('filter', filterType);
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
   return (
     <div className="bg-white rounded-xl p-4 lg:p-6 shadow-xl h-full flex flex-col overflow-hidden">
       <h3 className="m-0 mb-4 lg:mb-6 text-gray-800 text-lg lg:text-xl font-semibold">
@@ -27,12 +35,14 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       </h3>
 
       <div className="flex-1 mb-4 lg:mb-6 overflow-y-auto min-h-0">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4 p-2">
+        <div className="grid grid-cols-2 grid-rows-4 gap-3 lg:gap-4 p-2 h-fit">
           {Filters.map((filter) => {
             const isSelected = selectedFilter === filter.type;
             return (
               <div
                 key={filter.type}
+                draggable
+                onDragStart={(e) => handleDragStart(e, filter.type)}
                 tabIndex={0}
                 onClick={() => handleFilterSelect(filter.type)}
                 className={`
@@ -46,65 +56,27 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
                 `}
               >
                 <div className="relative w-full h-12 sm:h-14 lg:h-16 rounded-lg mb-2 lg:mb-3 flex-shrink-0 overflow-hidden shadow-sm">
-                  <div 
+                  <div
                     className="absolute inset-0 transition-all duration-300"
-                    style={getPreviewStyle(filter.type)} 
+                    style={getPreviewStyle(filter.type)}
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-10 rounded-lg" />
                   <h4
-                    className={`absolute inset-0 z-10 flex items-center justify-center text-xs sm:text-sm lg:text-sm font-semibold transition-colors duration-300 ${
-                      filter.type === 'invert' ? 'text-white drop-shadow-md' : 'text-gray-800 drop-shadow-sm'
-                    }`}
+                    className={`
+                      absolute inset-0 z-10 flex items-center justify-center text-xs font-semibold transition-colors duration-300 ${
+                        filter.type === 'invert'
+                          ? 'text-white drop-shadow-md'
+                          : 'text-gray-800 drop-shadow-sm'
+                      }
+                    `}
                   >
                     {filter.title}
                   </h4>
                 </div>
-                <p className="m-0 text-xs lg:text-sm text-gray-600 leading-tight text-center line-clamp-2">
-                  {filter.subtitle}
-                </p>
               </div>
             );
           })}
         </div>
-      </div>
-
-      {error && (
-        <div className="mb-4 flex-shrink-0">
-          <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-3 text-sm">
-            <div className="flex items-start gap-2">
-              <div className="w-4 h-4 rounded-full bg-red-200 flex-shrink-0 mt-0.5">
-                <div className="w-2 h-2 bg-red-500 rounded-full mx-auto mt-1"></div>
-              </div>
-              <div>
-                <strong className="block mb-1">Error occurred:</strong>
-                <span className="text-red-600">{error}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center mt-auto pt-4 border-t border-gray-200 flex-shrink-0">
-        <button
-          onClick={() => handleRequestVideo(selectedFilter)}
-          disabled={loading}
-          className={`
-            mx-auto px-6 lg:px-8 py-2.5 lg:py-3 border-none rounded-lg cursor-pointer 
-            text-sm lg:text-base font-medium transition-all duration-300 transform
-            ${loading 
-              ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
-              : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg hover:scale-105 active:scale-95'
-            }
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-          `}
-        >
-          <div className="flex items-center gap-2">
-            {loading && (
-              <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
-            )}
-            <span>{loading ? 'Applying Filter...' : 'Apply Filter'}</span>
-          </div>
-        </button>
       </div>
     </div>
   );
