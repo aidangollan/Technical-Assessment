@@ -4,6 +4,7 @@ import numpy as np
 import logging
 import tempfile
 import hashlib
+import subprocess
 
 from typing import List, Dict, Any
 
@@ -155,13 +156,32 @@ class VideoBackgroundService:
         if not (os.path.exists(raw_path) and os.path.getsize(raw_path) > 0):
             raise RuntimeError("Processed video file was not created successfully")
 
+        audio_path = get_temp_path() + ".aac"
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", video_url, "-vn", "-c:a", "copy", audio_path],
+            check=True
+        )
+        combined_path = get_temp_path() + "_with_audio.mp4"
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", raw_path, "-i", audio_path, "-c:v", "copy", "-c:a", "aac", combined_path],
+            check=True
+        )
+
         compressed_path = VideoCompressionService.compress_to_target(
-            raw_path, target_size_mb=50
+            combined_path, target_size_mb=50
         )
         try:
             os.remove(raw_path)
         except OSError:
             logger.warning(f"Could not delete intermediate file {raw_path}")
+        try:
+            os.remove(audio_path)
+        except OSError:
+            logger.warning(f"Could not delete audio file {audio_path}")
+        try:
+            os.remove(combined_path)
+        except OSError:
+            logger.warning(f"Could not delete combined file {combined_path}")
 
         upload_result = SupabaseStorageService.upload_video(compressed_path)
         try:

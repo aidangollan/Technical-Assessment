@@ -28,8 +28,20 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
   const [isPlaying, setIsPlaying] = useState(false)
   const [isSeeking, setIsSeeking] = useState(false)
   const [containerWidth, setContainerWidth] = useState(0)
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
 
   const disabled = !videoElement
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedItemId) {
+        setItems(prev => prev.filter(item => item.id !== selectedItemId))
+        setSelectedItemId(null)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [selectedItemId, setItems])
 
   useLayoutEffect(() => {
     const update = () => {
@@ -115,6 +127,7 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
     }
     setItems(prev => [...prev, newItem])
   }
+
   const handleDragStop = (id: string, x: number) => {
     if (!containerRef.current) return
     const rect = containerRef.current.getBoundingClientRect()
@@ -127,6 +140,7 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
       )
     )
   }
+
   const handleResizeStop = (
     id: string,
     _e: any,
@@ -199,6 +213,7 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
 
         <div
           ref={containerRef}
+          onClick={() => setSelectedItemId(null)}
           className={`absolute top-6 left-0 right-0 bottom-0 rounded-lg border-2 border-dashed ${
             disabled
               ? 'bg-gray-100 border-gray-300 pointer-events-none'
@@ -215,6 +230,7 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
             const yOff = (trackH - elH) / 2
             const xPx = (item.startTime / duration) * rect.width
             const wPx = ((item.endTime - item.startTime) / duration) * rect.width
+            const isSelected = selectedItemId === item.id
 
             return (
               <Rnd
@@ -235,9 +251,16 @@ const Timeline: React.FC<TimelineProps> = ({ videoElement, items, setItems }) =>
                           y: pos.y,
                         })
                 }
-                className="cursor-move"
               >
-                <div className="w-full h-full flex items-center justify-center text-xs text-white bg-blue-500 bg-opacity-80 rounded border border-blue-600 shadow-sm hover:bg-opacity-90 transition-all">
+                <div
+                  onClick={e => {
+                    e.stopPropagation()
+                    setSelectedItemId(item.id)
+                  }}
+                  className={`w-full h-full flex items-center justify-center text-xs text-white bg-blue-500 bg-opacity-80 rounded border shadow-sm hover:bg-opacity-90 transition-all ${
+                    isSelected ? 'ring-2 ring-yellow-400' : ''
+                  }`}
+                >
                   <span className="font-medium truncate px-1">{item.filterType}</span>
                 </div>
               </Rnd>
